@@ -35,8 +35,7 @@ add_executable(${PROJECT_NAME}
   main.cpp
   solverlib.hpp
   genmatrix.hpp
-  solverlib.tpp
-  genmatrix.tpp
+  matrix/matrix.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${eigen_SOURCE_DIR})
@@ -45,9 +44,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${eigen_SOURCE_DIR})
 enable_testing()
 
 add_executable(tests
+  tests/test_main.cpp
   tests/test_solver.cpp
-  solverlib.tpp
-  genmatrix.tpp
+  tests/test_utils.cpp
+  tests/test_fixture.hpp
+  matrix/matrix.hpp
   genmatrix.hpp
   solverlib.hpp
 )
