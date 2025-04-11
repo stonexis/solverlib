@@ -126,7 +126,7 @@ void BandMatrix<T, NumUpDiag, SizeDiag>::PrintBandMatrix(std::size_t width) cons
             std::cout <<'\n';
         std::cout << std::setprecision(4) << std::setw(width) << (*this)[i];
     }
-    std::cout << "-------------------------" << "\n";
+    std::cout << "\n" << "-------------------------" << "\n";
 }
 
 template<typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
