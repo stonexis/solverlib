@@ -1,8 +1,8 @@
 #pragma once
 #include <memory>
 #include "gtest/gtest.h"
-#include "../genmatrix.hpp"
-#include "../matrix/matrix.hpp"
+#include "genmatrix.hpp"
+#include "matrix.hpp"
 
 class MatrixFixture : public ::testing::Test {
     protected:

@@ -1,5 +1,5 @@
 #include <Eigen/Dense>
-#include "../solverlib.hpp"
+#include "solverlib.hpp"
 #include "test_fixture.hpp"
 
 // TEST_F(MatrixFixture, DISABLED_MyTest) {

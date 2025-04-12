@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(MyProject)
+project(SolverLib)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -33,12 +33,16 @@ FetchContent_MakeAvailable(eigen)
 
 add_executable(${PROJECT_NAME}
   main.cpp
-  solverlib.hpp
-  genmatrix.hpp
-  matrix/matrix.hpp
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${eigen_SOURCE_DIR})
+target_include_directories(
+  ${PROJECT_NAME} 
+  PRIVATE 
+  ${eigen_SOURCE_DIR} 
+  ${CMAKE_SOURCE_DIR}/genmatrix 
+  ${CMAKE_SOURCE_DIR}/matrix
+  ${CMAKE_SOURCE_DIR}/solverlib
+)
 
 #--- Тесты ---
 enable_testing()
@@ -47,13 +51,16 @@ add_executable(tests
   tests/test_main.cpp
   tests/test_solver.cpp
   tests/test_utils.cpp
-  tests/test_fixture.hpp
-  matrix/matrix.hpp
-  genmatrix.hpp
-  solverlib.hpp
 )
 
-target_include_directories(tests PRIVATE ${eigen_SOURCE_DIR})
+target_include_directories(
+  tests 
+  PRIVATE 
+  ${eigen_SOURCE_DIR} 
+  ${CMAKE_SOURCE_DIR}/genmatrix 
+  ${CMAKE_SOURCE_DIR}/matrix
+  ${CMAKE_SOURCE_DIR}/solverlib
+)
 target_link_libraries(tests gtest_main)
 
 add_test(NAME AllTests COMMAND tests)

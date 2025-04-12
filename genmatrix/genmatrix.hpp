@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <map>
-#include "matrix/matrix.hpp"
+#include "matrix.hpp"
 
 /**
  * @namespace Task_const
