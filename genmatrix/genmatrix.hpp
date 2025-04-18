@@ -187,20 +187,25 @@ void print_error_table(
                 );
 
 template <typename T>
-std::tuple<T**, T*, T*> gen_data(std::size_t size_matrix=Task_const::M, T step=Task_const::H, std::size_t count_rnd_points = Task_const::L){
+std::pair<T**, T*> gen_data(
+                        std::size_t size_matrix=Task_const::M, 
+                        T step=Task_const::H, 
+                        std::size_t count_rnd_points = Task_const::L, 
+                        std::size_t num_nodes = Task_const::N
+                    ){
     
     auto* array_global_nodes = gen_uniform_grid(step, size_matrix); // Генерируем глобальную сетку
     auto** array_2d_nodes = gen_2d_arr_uniform(array_global_nodes); // Разбиваем глобальную сетку на подсетки (с перекрытием в 1 узел)
     auto** array_2d_random = gen_random_2d_arr_in_local(array_2d_nodes); // Генерируем массив случайных точек на каждом КЭ, (В нем содержатся только случаные точки, без узлов)
-    auto** array_2d_func_in_rand = gen_func_2d_arr(array_2d_random, Task_const::L); // Применяем заданную функцию к массиву случаных точек
-    auto** array_2d_func_in_nodes = gen_func_2d_arr(array_2d_nodes,Task_const::N);
+    auto** array_2d_func_in_rand = gen_func_2d_arr(array_2d_random, count_rnd_points); // Применяем заданную функцию к массиву случаных точек
+    auto** array_2d_func_in_nodes = gen_func_2d_arr(array_2d_nodes, num_nodes);
     
-    // Создание и решение слау
+    // Создание слау
     auto** global_matrix = gen_global_matrix(array_2d_nodes, array_2d_random); // Собираем глобальную матрицу для решения слау
     auto* global_b_vector = gen_global_vector_b(array_2d_nodes, array_2d_random, array_2d_func_in_rand); // Собираем глобальную правую часть для решения слау
-    auto* result = solve_system_for_gen(global_matrix, global_b_vector);
+    //auto* result = solve_system_for_gen(global_matrix, global_b_vector);
     
 
-    return std::make_tuple(global_matrix, global_b_vector, result);
+    return std::make_pair(global_matrix, global_b_vector);
 }
 #include "genmatrix.tpp"

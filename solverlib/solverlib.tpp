@@ -136,7 +136,7 @@ T* solve_choletsky(std::unique_ptr<BandMatrix<T, NumUpDiag, SizeDiag>>& matrix_A
     std::copy(vector_b, vector_b + dim_matrix, copy_vector_b);
     T* solution = new T[dim_matrix]{};
 
-    auto sum_calc_ii = [&](std::size_t i){
+    auto sum_calc_ii = [&](std::size_t i){ //ссылка статична, захвачена до входа в цикл, однако данные в ней изменяются
         T sum = T(0);
         std::size_t start_idx = std::max(static_cast<int>(i - NumUpDiag), 0);
         for(std::size_t k = start_idx; k < i; k++) //sum_k=1 i-1
@@ -206,7 +206,8 @@ T* solve_success_over_relax(
                         T omega, 
                         T epsilon, 
                         std::size_t k_max,
-                        std::size_t except_stable_iter
+                        std::size_t except_stable_iter,
+                        bool good_conditions //Матрица симметрична, положительно определенная, с диагональным преобладанием или w<=1
                     ){
     if (vector_b == nullptr) throw std::invalid_argument("Vector_b is null");
 
@@ -237,8 +238,49 @@ T* solve_success_over_relax(
             num_iter_where_r_small++;
         else 
             num_iter_where_r_small = 0;
-        if (num_iter_where_r_small == except_stable_iter) break; //Метод монотонный, признак сходимости
+        if (good_conditions == true && num_iter_where_r_small == except_stable_iter) 
+            break; //Метод монотонный, признак сходимости
     }
 
     return vector_x;
+}
+/// ||Ax_k - b||
+template <typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
+T norm_residual(const BandMatrix<T, NumUpDiag, SizeDiag>& matrix_A, const T* vector_b, const T* x_k){
+
+
+
+
+}
+template <typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
+T* band_matrix_with_vector_product(const BandMatrix<T, NumUpDiag, SizeDiag>& matrix, const T* vector){
+    std::size_t dim_matrix = SizeDiag;
+    T* result = new T[dim_matrix];
+    for(std::size_t i = 0; i < dim_matrix; i++){
+        std::size_t start_idx = std::max(static_cast<int>(i - NumUpDiag), 0);
+        std::size_t end_idx = i + std::min(NumUpDiag + 1, dim_matrix - i);
+        T sum = T(0);
+        for(std::size_t j = start_idx; j < end_idx; j++){
+            sum += matrix(i,j) * vector[j];
+        }
+        result[i] = sum;            
+    }
+    return result;
+}
+
+
+template <typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
+T* solve_conjugate_grad(
+                        const BandMatrix<T, NumUpDiag, SizeDiag>& matrix_A, 
+                        const T* vector_b,
+                        T omega, 
+                        T epsilon, 
+                        std::size_t k_max,
+                        std::size_t except_stable_iter
+                    ){
+
+
+
+
+
 }
