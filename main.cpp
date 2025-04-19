@@ -1,6 +1,5 @@
 #include <iostream>
 #include <memory>
-#include "matrix.hpp"
 #include "genmatrix.hpp"
 #include "solverlib.hpp"
 
@@ -10,10 +9,12 @@ int main() {
     //auto ptr = std::unique_ptr<SymBandMatrix>(new SymBandMatrix(Convert(...)));
     using BandType = BandMatrix<double, Task_const::N - 1, Task_const::M>;
     auto mat_ptr = BandType::ConvertToBandFromSymBlock(matrix_A);
-    auto result_gauss = solve_gauss(mat_ptr, vector_b);
-    auto result_lu = solve_lu_decomposition_crout(mat_ptr, vector_b);
-    auto result_choletsky = solve_choletsky(mat_ptr, vector_b);
-    auto result_relax = solve_success_over_relax(*mat_ptr, vector_b);
+    auto& mat = *mat_ptr;
+    auto result_gauss = mat->Gauss().solve(vector_b);
+    auto result_lu = mat->LU().solve(vector_b);
+    auto result_choletsky = mat->Choletsky().solve(vector_b);
+    auto result_relax = mat->SuccesRelax().solve(vector_b);
+    
     //auto result = band_matrix_with_vector_product(*mat_ptr, vector_b);
     // for(std::size_t i = 0; i < Task_const::M; i++)
     //     std::cout << result[i] << " ";

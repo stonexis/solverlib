@@ -16,8 +16,8 @@ class MatrixFixture : public ::testing::Test {
         void SetUp() override {
             std::pair<double**, double*> data = gen_data(Task_const::M, Task_const::H);
             
-            auto mat_ptr = BandType::ConvertToBandFromSymBlock(std::get<0>(data));
-            matrix_A = mat_ptr->clone();
+            matrix_A = BandType::ConvertToBandFromSymBlock(std::get<0>(data));
+            
             vector_b = std::get<1>(data);
 
             for(std::size_t i = 0; i < Task_const::M; i++){
