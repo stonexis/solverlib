@@ -2,6 +2,7 @@
 #include <cmath>
 #include <random>
 #include <algorithm>
+#include <string_view>
 #include <Eigen/Dense>
 #include "matrix.hpp"
 
@@ -212,7 +213,7 @@ namespace Backend {
         if (vector_b == nullptr) throw std::invalid_argument("Vector_b is null");
 
         std::size_t dim_matrix = SizeDiag;
-        auto vector_x = gen_start_init_vec<T>(dim_matrix, 42); // Генерация 2-х стартовых векторов, начальный (k) и пустой (k+1)
+        auto vector_x = gen_start_init_vec<T>(dim_matrix, 42); // Генерация стартового вектора
 
         std::size_t num_iter_where_r_small = 0;
         for(std::size_t k_iteration = 0; k_iteration < k_max; k_iteration++){
@@ -244,18 +245,10 @@ namespace Backend {
 
         return vector_x;
     }
-    /// ||Ax_k - b||
+    
     template <typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
-    T norm_residual(const BandMatrix<T, NumUpDiag, SizeDiag>& matrix_A, const T* vector_b, const T* x_k){
-
-
-
-
-    }
-    template <typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
-    T* band_matrix_with_vector_product(const BandMatrix<T, NumUpDiag, SizeDiag>& matrix, const T* vector){
+    void inplace_product(const BandMatrix<T, NumUpDiag, SizeDiag>& matrix, const T* vector, T* result){
         std::size_t dim_matrix = SizeDiag;
-        T* result = new T[dim_matrix];
         for(std::size_t i = 0; i < dim_matrix; i++){
             std::size_t start_idx = std::max(static_cast<int>(i - NumUpDiag), 0);
             std::size_t end_idx = i + std::min(NumUpDiag + 1, dim_matrix - i);
@@ -265,23 +258,120 @@ namespace Backend {
             }
             result[i] = sum;            
         }
+    }
+
+    template <typename T>
+    inline T* diff_between_vectors(const T* vector_a, const T* vector_b, std::size_t dim_vec){
+        T* result = new T[dim_vec];
+        for(std::size_t i = 0; i < dim_vec; i++)
+            result[i] = vector_a[i] - vector_b[i];
         return result;
     }
 
+    template <typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
+    T* solve_conjugate_grad(
+                            const BandMatrix<T, NumUpDiag, SizeDiag>& matrix_A, 
+                            const T* vector_b, 
+                            T epsilon, 
+                            std::size_t k_max
+                        ){
+        if (vector_b == nullptr) throw std::invalid_argument("Vector_b is null");                       
+        std::size_t dim_matrix = SizeDiag;
 
-    // template <typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
-    // T* solve_conjugate_grad(
-    //                         const BandMatrix<T, NumUpDiag, SizeDiag>& matrix_A, 
-    //                         const T* vector_b,
-    //                         T omega, 
-    //                         T epsilon, 
-    //                         std::size_t k_max,
-    //                         std::size_t except_stable_iter
-    //                     ){
+        auto vector_x = gen_start_init_vec<T>(dim_matrix, 42); // Генерация стартового вектора
 
+        T* vector_Ax = new T[dim_matrix]; 
+        inplace_product(matrix_A, vector_x, vector_Ax); // Произведение Ax_0
 
+        auto residual = diff_between_vectors(vector_b, vector_Ax, dim_matrix); // Инициализация невязки r_0 = b - Ax_0
+        
+        T* vector_p = new T[dim_matrix]; 
+        std::copy(residual, residual + dim_matrix, vector_p); // Инициализирующее направление, как в градиентном спуске - по направлению невязки
+        
+        T* vector_Ap = new T[dim_matrix]; //Для последующего inplace произведения
+        for(std::size_t k_iteration = 0; k_iteration < k_max; k_iteration++){
+            inplace_product(matrix_A, vector_p, vector_Ap); //Произведение матриы А на вектор p, без выдиления новой памяти
+            T scalar_product_residual = std::inner_product(residual, residual + dim_matrix, residual, T(0)); // r^T * r, необходимо сохранить знаение, поскольку далее используются одновременно r_k и r_k+1
+            T alpha = scalar_product_residual / std::inner_product(vector_p, vector_p + dim_matrix, vector_Ap, T(0)); // Alpha = r^T*r / p^T * Ap
+            
+            for (std::size_t i = 0; i < dim_matrix; i++){
+                vector_x[i] += alpha * vector_p[i]; // x_k+1 = x_k + alpha * p_k 
+                residual[i] -= alpha * vector_Ap[i]; // r_k+1 = r_k - alpha * Ap_k
+            }
+            T beta = std::inner_product(residual, residual + dim_matrix, residual, T(0)) / scalar_product_residual; // (r_k+1)^T * r_k+1 / (r_k)^T * r_k  
+            for (std::size_t i = 0; i < dim_matrix; i++)
+                vector_p[i] = residual[i] + beta * vector_p[i]; // p_k+1 = r_k+1 + beta*p_k
+            if ( calc_2_norm_vector(residual, dim_matrix) < epsilon )
+                break;
+        }
+        delete [] residual;
+        delete [] vector_Ax;
+        delete [] vector_Ap;
+        delete [] vector_p;
 
+        return vector_x;
+    }
 
+    template<typename T>
+    void print_table(const T* expected, const T* obtained, std::size_t dim, const std::string_view method_name){
+        if (expected == nullptr || obtained == nullptr) throw std::invalid_argument("Vectors is null"); 
 
-    // }
+        T L1_abs = calc_1_norm_difference(expected, obtained, dim);
+        T L2_abs = calc_2_norm_difference(expected, obtained, dim);
+        T Linf_abs = calc_inf_norm_difference(expected, obtained, dim);
+
+        T L1_rel = L1_abs / calc_1_norm_vector(expected, dim);
+        T L2_rel = L2_abs / calc_2_norm_vector(expected, dim);
+        T Linf_rel = Linf_abs / calc_inf_norm_vector(expected, dim);
+
+        // std::cout << std::left 
+        //           << std::setw(5) 
+        //           << method_name << "\n"  << std::scientific << std::setprecision(9)
+        //           << std::setw(5) << " " << "L1_abs: " << L1_abs 
+        //           << std::setw(5) << " " << "L2_abs: " << L2_abs 
+        //           << std::setw(5) << " " << "Linf_abs: " << Linf_abs << "\n"
+
+        //           << std::setw(5) << " " << "L1_rel: " << L1_rel 
+        //           << std::setw(5) << " " << "L2_rel: " << L2_rel 
+        //           << std::setw(5) << " " << "Linf_rel: " << Linf_rel << "\n";
+        print_triplet(method_name, "L1_abs:", L1_abs, "L2_abs:", L2_abs, "Linf_abs:", Linf_abs);
+        print_triplet(method_name, "L1_rel:", L1_rel, "L2_rel:", L2_rel, "Linf_rel:", Linf_rel);
+    }
+
+    template <typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
+    void print_table_residual(
+                        const BandMatrix<T, NumUpDiag, SizeDiag>& matrix_A, 
+                        const T* vector_x, const T* vector_b, 
+                        std::string_view method_name
+                    ){
+        if (vector_x == nullptr || vector_b == nullptr) throw std::invalid_argument("Vectors is null");                    
+
+        T L1_residual_abs = calc_1_norm_residual(matrix_A, vector_x, vector_b);
+        T L2_residual_abs = calc_2_norm_residual(matrix_A, vector_x, vector_b);
+        T Linf_residual_abs = calc_inf_norm_residual(matrix_A, vector_x, vector_b);               
+
+        T L1_residual_rel = L1_residual_abs / calc_1_norm_vector(vector_b, SizeDiag);
+        T L2_residual_rel = L2_residual_abs / calc_2_norm_vector(vector_b, SizeDiag);
+        T Linf_residual_rel = Linf_residual_abs / calc_inf_norm_vector(vector_b, SizeDiag);
+
+        print_triplet(method_name,"L1_residual_abs:", L1_residual_abs, "L2_residual_abs:", L2_residual_abs, "Linf_residual_abs:", Linf_residual_abs);
+        print_triplet(method_name,"L1_residual_rel:", L1_residual_rel, "L2_residual_rel:", L2_residual_rel, "Linf_residual_rel:", Linf_residual_rel);
+                
+    }
+    template<typename T>
+    void print_triplet(std::string_view method_name, std::string_view label1, T v1, std::string_view label2, T v2, std::string_view label3, T v3){
+        constexpr int labelW = 16;
+        constexpr int valueW = 16; 
+
+        std::cout << std::left  << std::setw(labelW) << method_name << label1 
+        << std::right << std::setw(valueW) << std::scientific << std::setprecision(9) << v1 << " | "
+        << std::left  << std::setw(labelW) << label2
+        << std::right << std::setw(valueW) << v2 << " | "
+        << std::left  << std::setw(labelW) << label3
+        << std::right << std::setw(valueW) << v3 << " | " 
+        << "\n";
+        print_line(122);
+    }
+
 }
+

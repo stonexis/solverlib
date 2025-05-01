@@ -45,25 +45,25 @@ target_include_directories(
 )
 
 #--- Тесты ---
-# enable_testing()
+enable_testing()
 
-# add_executable(tests
-#   tests/test_main.cpp
-#   tests/test_solver.cpp
-#   tests/test_utils.cpp
-# )
+add_executable(tests
+  tests/test_main.cpp
+  tests/test_solver.cpp
+  tests/test_utils.cpp
+)
 
-# target_include_directories(
-#   tests 
-#   PRIVATE 
-#   ${eigen_SOURCE_DIR} 
-#   ${CMAKE_SOURCE_DIR}/genmatrix 
-#   ${CMAKE_SOURCE_DIR}/matrix
-#   ${CMAKE_SOURCE_DIR}/solverlib
-# )
-# target_link_libraries(tests gtest_main)
+target_include_directories(
+  tests 
+  PRIVATE 
+  ${eigen_SOURCE_DIR} 
+  ${CMAKE_SOURCE_DIR}/genmatrix 
+  ${CMAKE_SOURCE_DIR}/matrix
+  ${CMAKE_SOURCE_DIR}/solverlib
+)
+target_link_libraries(tests gtest_main)
 
-# add_test(NAME AllTests COMMAND tests)
+add_test(NAME AllTests COMMAND tests)
 
 # --- Бенчмарки ---
 # add_executable(benchmarks benchmark/sample_benchmark.cpp)

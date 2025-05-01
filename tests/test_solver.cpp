@@ -62,3 +62,26 @@ TEST_F(MatrixFixture, SolvesOverRelaxCorrectly) {
                                               << "Expected: " << x_eigen(i) << "\n"
                                               << "Got     : " << x[i];
 }
+
+TEST_F(MatrixFixture, SolvesConjugateGradCorrectly) {
+
+    double epsilon = 1e-9;
+    auto x = (*matrix_A)->ConjugateGrad().solve(vector_b);
+    
+    Eigen::MatrixXd A_dyn = A_eigen;   
+    Eigen::VectorXd b_dyn = b_eigen;      
+
+    Eigen::ConjugateGradient<
+    Eigen::MatrixXd,              // dynamic Matrix type
+    Eigen::Lower|Eigen::Upper     // general symmetric but not triangular
+    > cg;
+
+    cg.compute(A_dyn);
+
+
+    Eigen::VectorXd x_eigen = cg.solve(b_dyn);
+    for(std::size_t i = 0; i < Task_const::M; i++)
+    EXPECT_TRUE((x[i] - x_eigen(i)) < epsilon) << "solverSuccessOverRelax() gave wrong result:\n"
+                                              << "Expected: " << x_eigen(i) << "\n"
+                                              << "Got     : " << x[i];
+}

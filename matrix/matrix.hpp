@@ -10,8 +10,7 @@ template<class Mat> struct MatrixTools; //Предекларация forward dec
 template<typename T, std::size_t NumUpDiag, std::size_t SizeDiag>
 struct BandMatrix {
     T m_data[(2*NumUpDiag + 1) * SizeDiag]{};
-    BandMatrix(){std::cout << "BandMatrix()\n";}
-    ~BandMatrix(){std::cout << "~BandMatrix()\n";}
+    
     ///Обращение как к обычной матрице
     inline T& operator()(std::size_t i, std::size_t j) noexcept; 
     inline const T& operator()(std::size_t i, std::size_t j) const noexcept;

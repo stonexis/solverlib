@@ -203,9 +203,13 @@ std::pair<T**, T*> gen_data(
     // Создание слау
     auto** global_matrix = gen_global_matrix(array_2d_nodes, array_2d_random); // Собираем глобальную матрицу для решения слау
     auto* global_b_vector = gen_global_vector_b(array_2d_nodes, array_2d_random, array_2d_func_in_rand); // Собираем глобальную правую часть для решения слау
-    //auto* result = solve_system_for_gen(global_matrix, global_b_vector);
     
-
+    delete[] array_global_nodes;
+    delete_2d_array(array_2d_nodes);
+    delete_2d_array(array_2d_random);
+    delete_2d_array(array_2d_func_in_rand);
+    delete_2d_array(array_2d_func_in_nodes);
+    
     return std::make_pair(global_matrix, global_b_vector);
 }
 #include "genmatrix.tpp"
