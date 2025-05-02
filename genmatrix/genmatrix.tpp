@@ -294,7 +294,7 @@ template <typename T>
 T** gen_lagrange_basis_arr_local(const T* array_nodes, const T* array_eval_points, const std::size_t count_nodes_points, const std::size_t count_eval_points) {
     if (array_nodes == nullptr || array_eval_points == nullptr) throw std::invalid_argument("Input arrays cannot be null");
     if (count_nodes_points == 0 || count_eval_points == 0) throw std::invalid_argument("Size arrays cannot be 0");
-    static T* denominator = nullptr;
+    T* denominator = nullptr;//static T* denominator = nullptr;
     if (!denominator) // Проверяем, был ли уже вычислен знаменатель
         denominator = denominator_fun(array_nodes, count_nodes_points); // Вычисляем знаменатель один раз
     T** lagrange_basis_array = new T*[count_eval_points]{}; // Массив для хранения значений всех базисных функций для всех случайных точек

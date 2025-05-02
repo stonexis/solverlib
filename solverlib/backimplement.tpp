@@ -324,16 +324,6 @@ namespace Backend {
         T L2_rel = L2_abs / calc_2_norm_vector(expected, dim);
         T Linf_rel = Linf_abs / calc_inf_norm_vector(expected, dim);
 
-        // std::cout << std::left 
-        //           << std::setw(5) 
-        //           << method_name << "\n"  << std::scientific << std::setprecision(9)
-        //           << std::setw(5) << " " << "L1_abs: " << L1_abs 
-        //           << std::setw(5) << " " << "L2_abs: " << L2_abs 
-        //           << std::setw(5) << " " << "Linf_abs: " << Linf_abs << "\n"
-
-        //           << std::setw(5) << " " << "L1_rel: " << L1_rel 
-        //           << std::setw(5) << " " << "L2_rel: " << L2_rel 
-        //           << std::setw(5) << " " << "Linf_rel: " << Linf_rel << "\n";
         print_triplet(method_name, "L1_abs:", L1_abs, "L2_abs:", L2_abs, "Linf_abs:", Linf_abs);
         print_triplet(method_name, "L1_rel:", L1_rel, "L2_rel:", L2_rel, "Linf_rel:", Linf_rel);
     }

@@ -46,10 +46,6 @@ int main() {
     Backend::print_table_residual(mat, result_relax, vector_b, "SOR");
     Backend::print_table_residual(mat, result_conjugate, vector_b, "CG");
 
-
-
-
-
     delete[] result_gauss;
     delete[] result_lu;
     delete[] result_choletsky;

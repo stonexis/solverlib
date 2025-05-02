@@ -3,39 +3,40 @@
 #include "solverlib.hpp"
 #include "test_fixture.hpp"
 
-TEST_F(MatrixFixture, MatrixProductCorrect) {
-    double* res = new double[Task_const::M];
-    Backend::inplace_product(*matrix_A, vector_b, res);
-    auto res_eigen = A_eigen * b_eigen;
+TYPED_TEST(MatrixFixture, MatrixProductCorrect) {
+    double* res = new double[TestFixture::M];
+    auto& mat = *this->matrix_A;
+    Backend::inplace_product(mat, this->vector_b, res);
+    auto res_eigen = this->A_eigen * this->b_eigen;
     
     double epsilon = 1e-9;
-    for(std::size_t i = 0; i < Task_const::M; i++)
+    for(std::size_t i = 0; i < TestFixture::M; i++)
     EXPECT_TRUE((res[i] - res_eigen[i]) < epsilon) << "product gave wrong result:\n"
                                               << "Expected: " << res[i] << "\n"
                                               << "Got     : " << res_eigen[i];
 }
 
-TEST_F(MatrixFixture, NormsCorrect) {
-    auto x = (*matrix_A)->ConjugateGrad().solve(vector_b);
+TYPED_TEST(MatrixFixture, NormsCorrect) {
+    auto& mat = *this->matrix_A;
+    auto x = mat->ConjugateGrad().solve(this->vector_b);
 
-    Eigen::MatrixXd A_dyn = A_eigen;   
-    Eigen::VectorXd b_dyn = b_eigen;      
-
+    Eigen::MatrixXd A_dyn = this->A_eigen;   
+    Eigen::VectorXd b_dyn = this->b_eigen;      
     Eigen::ConjugateGradient<Eigen::MatrixXd, Eigen::Lower|Eigen::Upper> cg;
     cg.compute(A_dyn);
 
     Eigen::VectorXd x_eigen = cg.solve(b_dyn);
 
-    Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 1>> x_col(x, Task_const::M);
+    Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 1>> x_col(x, TestFixture::M);
 
 
-    double L1_eigen = b_eigen.lpNorm<1>();
-    double L2_eigen = b_eigen.lpNorm<2>();
-    double Linf_eigen = b_eigen.lpNorm<Eigen::Infinity>();
+    double L1_eigen = this->b_eigen.template lpNorm<1>();
+    double L2_eigen = this->b_eigen.template lpNorm<2>();
+    double Linf_eigen = this->b_eigen.template lpNorm<Eigen::Infinity>();
 
-    double L1 = Backend::calc_1_norm_vector(vector_b, Task_const::M);
-    double L2 = Backend::calc_2_norm_vector(vector_b, Task_const::M);
-    double Linf = Backend::calc_inf_norm_vector(vector_b, Task_const::M);
+    double L1 = Backend::calc_1_norm_vector(this->vector_b, TestFixture::M);
+    double L2 = Backend::calc_2_norm_vector(this->vector_b, TestFixture::M);
+    double Linf = Backend::calc_inf_norm_vector(this->vector_b, TestFixture::M);
 
     double L1_diff_eigen = (x_col - x_eigen).lpNorm<1>();
     double L2_diff_eigen = (x_col - x_eigen).lpNorm<2>();
@@ -44,9 +45,9 @@ TEST_F(MatrixFixture, NormsCorrect) {
     double* ptr_x = x_col.data();
     double* ptr_x_eigen = x_eigen.data();
 
-    double L1_diff = Backend::calc_1_norm_difference(ptr_x, ptr_x_eigen, Task_const::M);
-    double L2_diff = Backend::calc_2_norm_difference(ptr_x, ptr_x_eigen, Task_const::M);
-    double Linf_diff = Backend::calc_inf_norm_difference(ptr_x, ptr_x_eigen, Task_const::M);
+    double L1_diff = Backend::calc_1_norm_difference(ptr_x, ptr_x_eigen, TestFixture::M);
+    double L2_diff = Backend::calc_2_norm_difference(ptr_x, ptr_x_eigen, TestFixture::M);
+    double Linf_diff = Backend::calc_inf_norm_difference(ptr_x, ptr_x_eigen, TestFixture::M);
     double epsilon = 1e-15;
 
     EXPECT_TRUE((L1_eigen - L1) < epsilon) << "gave wrong result:\n" << "Expected: " << L1_eigen << "\n" << "Got: " << L1;

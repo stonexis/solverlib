@@ -11,9 +11,9 @@ namespace Task_const {
     /// Редактируемые параметры
     inline constexpr double A = 0.0; ///Концы отрезка
     inline constexpr double B = 10.0; ///Концы отрезка
-    inline constexpr std::size_t K = 3; ///Количество подотрезков интeрполяции
-    inline constexpr std::size_t N = 4; ///Количество узлов конечного элемента (Степень полинома на 1 меньше)
-    inline constexpr std::size_t L = 8; ///Количество внутренних "случайных" точек
+    inline constexpr std::size_t K = 3; ///Количество подотрезков интeрполяции (base 3)
+    inline constexpr std::size_t N = 4; ///Количество узлов конечного элемента (Степень полинома на 1 меньше) (base 4)
+    inline constexpr std::size_t L = 8; ///Количество внутренних "случайных" точек (base 8)
     inline constexpr std::size_t M_viz = 300; ///Количество точек равномерной сетки для отображения графика
 
     /// Нередактируемые параметры 
@@ -191,24 +191,27 @@ std::pair<T**, T*> gen_data(
                         std::size_t size_matrix=Task_const::M, 
                         T step=Task_const::H, 
                         std::size_t count_rnd_points = Task_const::L, 
-                        std::size_t num_nodes = Task_const::N
+                        std::size_t num_nodes = Task_const::N,
+                        std::size_t count_intervals = Task_const::K,
+                        T a=Task_const::A,
+                        T b=Task_const::B
                     ){
     
-    auto* array_global_nodes = gen_uniform_grid(step, size_matrix); // Генерируем глобальную сетку
-    auto** array_2d_nodes = gen_2d_arr_uniform(array_global_nodes); // Разбиваем глобальную сетку на подсетки (с перекрытием в 1 узел)
-    auto** array_2d_random = gen_random_2d_arr_in_local(array_2d_nodes); // Генерируем массив случайных точек на каждом КЭ, (В нем содержатся только случаные точки, без узлов)
-    auto** array_2d_func_in_rand = gen_func_2d_arr(array_2d_random, count_rnd_points); // Применяем заданную функцию к массиву случаных точек
-    auto** array_2d_func_in_nodes = gen_func_2d_arr(array_2d_nodes, num_nodes);
+    auto* array_global_nodes = gen_uniform_grid(step, size_matrix, a, b); // Генерируем глобальную сетку
+    auto** array_2d_nodes = gen_2d_arr_uniform(array_global_nodes, step, num_nodes,count_intervals, a, b); // Разбиваем глобальную сетку на подсетки (с перекрытием в 1 узел)
+    auto** array_2d_random = gen_random_2d_arr_in_local(array_2d_nodes,num_nodes,count_intervals, count_rnd_points); // Генерируем массив случайных точек на каждом КЭ, (В нем содержатся только случаные точки, без узлов)
+    auto** array_2d_func_in_rand = gen_func_2d_arr(array_2d_random, count_rnd_points, count_intervals); // Применяем заданную функцию к массиву случаных точек
+    auto** array_2d_func_in_nodes = gen_func_2d_arr(array_2d_nodes, num_nodes, count_intervals);
     
     // Создание слау
-    auto** global_matrix = gen_global_matrix(array_2d_nodes, array_2d_random); // Собираем глобальную матрицу для решения слау
-    auto* global_b_vector = gen_global_vector_b(array_2d_nodes, array_2d_random, array_2d_func_in_rand); // Собираем глобальную правую часть для решения слау
+    auto** global_matrix = gen_global_matrix(array_2d_nodes, array_2d_random, num_nodes,count_intervals,count_rnd_points,size_matrix); // Собираем глобальную матрицу для решения слау
+    auto* global_b_vector = gen_global_vector_b(array_2d_nodes, array_2d_random, array_2d_func_in_rand, num_nodes,count_intervals,count_rnd_points,size_matrix); // Собираем глобальную правую часть для решения слау
     
     delete[] array_global_nodes;
-    delete_2d_array(array_2d_nodes);
-    delete_2d_array(array_2d_random);
-    delete_2d_array(array_2d_func_in_rand);
-    delete_2d_array(array_2d_func_in_nodes);
+    delete_2d_array(array_2d_nodes, count_intervals);
+    delete_2d_array(array_2d_random,count_intervals);
+    delete_2d_array(array_2d_func_in_rand, count_intervals);
+    delete_2d_array(array_2d_func_in_nodes,count_intervals);
     
     return std::make_pair(global_matrix, global_b_vector);
 }
